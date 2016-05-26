@@ -12,6 +12,11 @@ import (
 	"github.com/go-kit/kit/examples/addsvc2/pb"
 )
 
+// This file contains methods to make individual endpoints from services,
+// request and response types to serve those endpoints, as well as encoders and
+// decoders for those types, for all of our supported transport serialization
+// formats.
+
 // Endpoints collects all of the endpoints that compose an AddService. It's
 // meant to be used as a helper struct, to collect all of the endpoints into a
 // single parameter.

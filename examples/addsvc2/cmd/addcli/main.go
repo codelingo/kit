@@ -10,11 +10,11 @@ import (
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/grpclog"
 
 	"github.com/go-kit/kit/examples/addsvc2"
 	grpcclient "github.com/go-kit/kit/examples/addsvc2/client/grpc"
 	httpclient "github.com/go-kit/kit/examples/addsvc2/client/http"
+	"google.golang.org/grpc/grpclog"
 )
 
 func main() {
