@@ -1,3 +1,4 @@
+// Package http provides an HTTP client for the add service.
 package http
 
 import (

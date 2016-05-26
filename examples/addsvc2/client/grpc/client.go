@@ -1,3 +1,4 @@
+// Package grpc provides a gRPC client for the add service.
 package grpc
 
 import (

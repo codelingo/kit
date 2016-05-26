@@ -8,6 +8,10 @@ import (
 )
 
 // This file provides server-side bindings for the Thrift transport.
+//
+// This file also provides endpoint constructors that utilize a Thrift client,
+// for use in client packages, because package transport/thrift doesn't exist
+// yet. See https://github.com/go-kit/kit/issues/184.
 
 // MakeThriftHandler makes a set of endpoints available as a Thrift service.
 func MakeThriftHandler(ctx context.Context, e Endpoints) thriftadd.AddService {
@@ -42,4 +46,31 @@ func (s *thriftServer) Concat(a string, b string) (*thriftadd.ConcatReply, error
 	}
 	resp := response.(concatResponse)
 	return &thriftadd.ConcatReply{Value: resp.V}, nil
+}
+
+// MakeThriftSumEndpoint returns an endpoint that invokes the passed Thrift client.
+// Useful only in clients, and only until a proper transport/thrift.Client exists.
+func MakeThriftSumEndpoint(client *thriftadd.AddServiceClient) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(sumRequest)
+		reply, err := client.Sum(int64(req.A), int64(req.B))
+		if err != nil {
+			return nil, err
+		}
+		return sumResponse{V: int(reply.Value)}, nil
+	}
+}
+
+// MakeThriftConcatEndpoint returns an endpoint that invokes the passed Thrift
+// client. Useful only in clients, and only until a proper
+// transport/thrift.Client exists.
+func MakeThriftConcatEndpoint(client *thriftadd.AddServiceClient) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(concatRequest)
+		reply, err := client.Concat(req.A, req.B)
+		if err != nil {
+			return nil, err
+		}
+		return concatResponse{V: reply.Value}, nil
+	}
 }
