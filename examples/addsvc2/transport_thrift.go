@@ -1,17 +1,17 @@
 package addsvc
 
+// This file provides server-side bindings for the Thrift transport.
+//
+// This file also provides endpoint constructors that utilize a Thrift client,
+// for use in client packages, because package transport/thrift doesn't exist
+// yet. See https://github.com/go-kit/kit/issues/184.
+
 import (
 	"golang.org/x/net/context"
 
 	"github.com/go-kit/kit/endpoint"
 	thriftadd "github.com/go-kit/kit/examples/addsvc2/thrift/gen-go/addsvc"
 )
-
-// This file provides server-side bindings for the Thrift transport.
-//
-// This file also provides endpoint constructors that utilize a Thrift client,
-// for use in client packages, because package transport/thrift doesn't exist
-// yet. See https://github.com/go-kit/kit/issues/184.
 
 // MakeThriftHandler makes a set of endpoints available as a Thrift service.
 func MakeThriftHandler(ctx context.Context, e Endpoints) thriftadd.AddService {

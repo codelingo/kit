@@ -1,5 +1,8 @@
 package addsvc
 
+// This file provides server-side bindings for the HTTP transport.
+// It utilizes the transport/http.Server.
+
 import (
 	"encoding/json"
 	"errors"
@@ -12,8 +15,6 @@ import (
 	"github.com/go-kit/kit/tracing/opentracing"
 	httptransport "github.com/go-kit/kit/transport/http"
 )
-
-// This file provides server-side bindings for the HTTP transport.
 
 // MakeHTTPHandler returns a handler that makes a set of endpoints available
 // on predefined paths.

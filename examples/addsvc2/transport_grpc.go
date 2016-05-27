@@ -1,5 +1,8 @@
 package addsvc
 
+// This file provides server-side bindings for the gRPC transport.
+// It utilizes the transport/grpc.Server.
+
 import (
 	stdopentracing "github.com/opentracing/opentracing-go"
 	"golang.org/x/net/context"
@@ -9,8 +12,6 @@ import (
 	"github.com/go-kit/kit/tracing/opentracing"
 	grpctransport "github.com/go-kit/kit/transport/grpc"
 )
-
-// This file provides server-side bindings for the gRPC transport.
 
 // MakeGRPCServer makes a set of endpoints available as a gRPC AddServer.
 func MakeGRPCServer(ctx context.Context, endpoints Endpoints, tracer stdopentracing.Tracer, logger log.Logger) pb.AddServer {

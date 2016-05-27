@@ -1,5 +1,10 @@
 package addsvc
 
+// This file contains methods to make individual endpoints from services,
+// request and response types to serve those endpoints, as well as encoders and
+// decoders for those types, for all of our supported transport serialization
+// formats. It also includes endpoint middlewares.
+
 import (
 	"bytes"
 	"encoding/json"
@@ -15,11 +20,6 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/metrics"
 )
-
-// This file contains methods to make individual endpoints from services,
-// request and response types to serve those endpoints, as well as encoders and
-// decoders for those types, for all of our supported transport serialization
-// formats. It also includes endpoint middlewares.
 
 // Endpoints collects all of the endpoints that compose an AddService. It's
 // meant to be used as a helper struct, to collect all of the endpoints into a
@@ -136,7 +136,8 @@ type concatRequest struct{ A, B string }
 type concatResponse struct{ V string }
 
 // DecodeHTTPSumRequest is a transport/http.DecodeRequestFunc that decodes a
-// JSON-encoded sum request from the request body. Primarily useful in a server.
+// JSON-encoded sum request from the HTTP request body. Primarily useful in a
+// server.
 func DecodeHTTPSumRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	var req sumRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
@@ -144,7 +145,7 @@ func DecodeHTTPSumRequest(_ context.Context, r *http.Request) (interface{}, erro
 }
 
 // DecodeHTTPConcatRequest is a transport/http.DecodeRequestFunc that decodes a
-// JSON-encoded concat request from the request body. Primarily useful in a
+// JSON-encoded concat request from the HTTP request body. Primarily useful in a
 // server.
 func DecodeHTTPConcatRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	var req concatRequest
@@ -153,7 +154,7 @@ func DecodeHTTPConcatRequest(_ context.Context, r *http.Request) (interface{}, e
 }
 
 // DecodeHTTPSumResponse is a transport/http.DecodeResponseFunc that decodes a
-// JSON-encoded sum response from the response body. If the response has a
+// JSON-encoded sum response from the HTTP response body. If the response has a
 // non-200 status code, we will interpret that as an error and attempt to decode
 // the specific error message from the response body. Primarily useful in a
 // client.
@@ -167,10 +168,10 @@ func DecodeHTTPSumResponse(_ context.Context, r *http.Response) (interface{}, er
 }
 
 // DecodeHTTPConcatResponse is a transport/http.DecodeResponseFunc that decodes
-// a JSON-encoded concat response from the response body. If the response has a
-// non-200 status code, we will interpret that as an error and attempt to decode
-// the specific error message from the response body. Primarily useful in a
-// client.
+// a JSON-encoded concat response from the HTTP response body. If the response
+// has a non-200 status code, we will interpret that as an error and attempt to
+// decode the specific error message from the response body. Primarily useful in
+// a client.
 func DecodeHTTPConcatResponse(_ context.Context, r *http.Response) (interface{}, error) {
 	if r.StatusCode != http.StatusOK {
 		return nil, errorDecoder(r)

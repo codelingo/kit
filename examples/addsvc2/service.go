@@ -1,5 +1,8 @@
 package addsvc
 
+// This file contains the Service definition, and a basic service
+// implementation. It also includes service middlewares.
+
 import (
 	"errors"
 	"time"
@@ -9,9 +12,6 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/metrics"
 )
-
-// This file has the Service definition, and a basic service implementation.
-// It also includes service middlewares.
 
 // Service describes a service that adds things together.
 type Service interface {
@@ -84,13 +84,13 @@ func (mw serviceLoggingMiddleware) Concat(ctx context.Context, a, b string) (v s
 }
 
 // ServiceInstrumentingMiddleware returns a service middleware that instruments
-// the number of integers summed and character concatenated over the lifetime of
+// the number of integers summed and characters concatenated over the lifetime of
 // the service.
-func ServiceInstrumentingMiddleware(integersSummed, charactersConcatenated metrics.Counter) Middleware {
+func ServiceInstrumentingMiddleware(ints, chars metrics.Counter) Middleware {
 	return func(next Service) Service {
 		return serviceInstrumentingMiddleware{
-			ints:  integersSummed,
-			chars: charactersConcatenated,
+			ints:  ints,
+			chars: chars,
 			next:  next,
 		}
 	}
