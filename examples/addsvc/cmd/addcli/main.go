@@ -17,11 +17,11 @@ import (
 	"google.golang.org/grpc"
 	"sourcegraph.com/sourcegraph/appdash"
 
-	"github.com/go-kit/kit/examples/addsvc2"
-	grpcclient "github.com/go-kit/kit/examples/addsvc2/client/grpc"
-	httpclient "github.com/go-kit/kit/examples/addsvc2/client/http"
-	thriftclient "github.com/go-kit/kit/examples/addsvc2/client/thrift"
-	thriftadd "github.com/go-kit/kit/examples/addsvc2/thrift/gen-go/addsvc"
+	"github.com/go-kit/kit/examples/addsvc"
+	grpcclient "github.com/go-kit/kit/examples/addsvc/client/grpc"
+	httpclient "github.com/go-kit/kit/examples/addsvc/client/http"
+	thriftclient "github.com/go-kit/kit/examples/addsvc/client/thrift"
+	thriftadd "github.com/go-kit/kit/examples/addsvc/thrift/gen-go/addsvc"
 	"github.com/go-kit/kit/log"
 )
 

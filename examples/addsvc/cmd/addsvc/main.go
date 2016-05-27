@@ -23,9 +23,9 @@ import (
 	"sourcegraph.com/sourcegraph/appdash"
 
 	"github.com/go-kit/kit/endpoint"
-	"github.com/go-kit/kit/examples/addsvc2"
-	"github.com/go-kit/kit/examples/addsvc2/pb"
-	thriftadd "github.com/go-kit/kit/examples/addsvc2/thrift/gen-go/addsvc"
+	"github.com/go-kit/kit/examples/addsvc"
+	"github.com/go-kit/kit/examples/addsvc/pb"
+	thriftadd "github.com/go-kit/kit/examples/addsvc/thrift/gen-go/addsvc"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/metrics"
 	"github.com/go-kit/kit/metrics/prometheus"
