@@ -12,7 +12,7 @@ import (
 
 // MakeGRPCServer makes a set of endpoints available as a gRPC AddServer.
 func MakeGRPCServer(ctx context.Context, endpoints Endpoints, logger log.Logger) pb.AddServer {
-	// TODO(pb): add tracer and logger
+	// TODO(pb): add tracer
 	options := []grpctransport.ServerOption{
 		grpctransport.ServerErrorLogger(logger),
 	}

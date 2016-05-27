@@ -8,23 +8,30 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/apache/thrift/lib/go/thrift"
+	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+
+	"net/http/pprof"
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/examples/addsvc2"
 	"github.com/go-kit/kit/examples/addsvc2/pb"
 	thriftadd "github.com/go-kit/kit/examples/addsvc2/thrift/gen-go/addsvc"
 	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/metrics"
+	"github.com/go-kit/kit/metrics/prometheus"
 )
 
 func main() {
 	var (
-		httpAddr         = flag.String("http.addr", ":8080", "HTTP listen address")
-		grpcAddr         = flag.String("grpc.addr", ":8081", "gRPC (HTTP) listen address")
-		thriftAddr       = flag.String("thrift.addr", ":8082", "Thrift listen address")
+		debugAddr        = flag.String("debug.addr", ":8080", "Debug and metrics listen address")
+		httpAddr         = flag.String("http.addr", ":8081", "HTTP listen address")
+		grpcAddr         = flag.String("grpc.addr", ":8082", "gRPC (HTTP) listen address")
+		thriftAddr       = flag.String("thrift.addr", ":8083", "Thrift listen address")
 		thriftProtocol   = flag.String("thrift.protocol", "binary", "binary, compact, json, simplejson")
 		thriftBufferSize = flag.Int("thrift.buffer.size", 0, "0 for unbuffered")
 		thriftFramed     = flag.Bool("thrift.framed", false, "true to enable framing")
@@ -41,23 +48,57 @@ func main() {
 	logger.Log("msg", "hello")
 	defer logger.Log("msg", "goodbye")
 
+	// Metrics domain
+	var ints, chars metrics.Counter
+	{
+		// Business level metrics
+		ints = prometheus.NewCounter(stdprometheus.CounterOpts{
+			Namespace: "addsvc",
+			Name:      "integers_summed",
+			Help:      "Total count of integers summed via the Sum method.",
+		}, []string{})
+		chars = prometheus.NewCounter(stdprometheus.CounterOpts{
+			Namespace: "addsvc",
+			Name:      "characters_concatenated",
+			Help:      "Total count of characters concatenated via the Concat method.",
+		}, []string{})
+	}
+	var duration metrics.TimeHistogram
+	{
+		// Transport level metrics
+		duration = metrics.NewTimeHistogram(time.Nanosecond, prometheus.NewSummary(stdprometheus.SummaryOpts{
+			Namespace: "addsvc",
+			Name:      "request_duration_ns",
+			Help:      "Request duration in nanoseconds.",
+		}, []string{"method", "success"}))
+	}
+
 	// Business domain
 	var service addsvc.Service
 	{
 		service = addsvc.NewBasicService()
-		// TODO(pb): service middlewares
+		service = addsvc.ServiceLoggingMiddleware(logger)(service)
+		service = addsvc.ServiceInstrumentingMiddleware(ints, chars)(service)
 	}
 
 	// Endpoint domain
 	var sumEndpoint endpoint.Endpoint
 	{
+		sumDuration := duration.With(metrics.Field{Key: "method", Value: "Sum"})
+		sumLogger := log.NewContext(logger).With("method", "Sum")
+
 		sumEndpoint = addsvc.MakeSumEndpoint(service)
-		// TODO(pb): endpoint middlewares
+		sumEndpoint = addsvc.EndpointInstrumentingMiddleware(sumDuration)(sumEndpoint)
+		sumEndpoint = addsvc.EndpointLoggingMiddleware(sumLogger)(sumEndpoint)
 	}
 	var concatEndpoint endpoint.Endpoint
 	{
+		concatDuration := duration.With(metrics.Field{Key: "method", Value: "Concat"})
+		concatLogger := log.NewContext(logger).With("method", "Concat")
+
 		concatEndpoint = addsvc.MakeConcatEndpoint(service)
-		// TODO(pb): endpoint middlewares
+		concatEndpoint = addsvc.EndpointInstrumentingMiddleware(concatDuration)(concatEndpoint)
+		concatEndpoint = addsvc.EndpointLoggingMiddleware(concatLogger)(concatEndpoint)
 	}
 	endpoints := addsvc.Endpoints{
 		SumEndpoint:    sumEndpoint,
@@ -73,6 +114,20 @@ func main() {
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
 		errc <- fmt.Errorf("%s", <-c)
+	}()
+
+	// Debug listener
+	go func() {
+		logger := log.NewContext(logger).With("transport", "debug")
+		m := http.NewServeMux()
+		m.Handle("/debug/pprof/", http.HandlerFunc(pprof.Index))
+		m.Handle("/debug/pprof/cmdline", http.HandlerFunc(pprof.Cmdline))
+		m.Handle("/debug/pprof/profile", http.HandlerFunc(pprof.Profile))
+		m.Handle("/debug/pprof/symbol", http.HandlerFunc(pprof.Symbol))
+		m.Handle("/debug/pprof/trace", http.HandlerFunc(pprof.Trace))
+		m.Handle("/metrics", stdprometheus.Handler())
+		logger.Log("addr", *debugAddr)
+		errc <- http.ListenAndServe(*debugAddr, m)
 	}()
 
 	// HTTP transport

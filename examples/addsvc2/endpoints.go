@@ -3,19 +3,23 @@ package addsvc
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"golang.org/x/net/context"
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/examples/addsvc2/pb"
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/metrics"
 )
 
 // This file contains methods to make individual endpoints from services,
 // request and response types to serve those endpoints, as well as encoders and
 // decoders for those types, for all of our supported transport serialization
-// formats.
+// formats. It also includes endpoint middlewares.
 
 // Endpoints collects all of the endpoints that compose an AddService. It's
 // meant to be used as a helper struct, to collect all of the endpoints into a
@@ -86,8 +90,42 @@ func MakeConcatEndpoint(s Service) endpoint.Endpoint {
 	}
 }
 
+// EndpointInstrumentingMiddleware returns an endpoint middleware that records
+// the duration of each invocation to the passed histogram. The middleware adds
+// a single field: "success", which is "true" if no error is returned, and
+// "false" otherwise.
+func EndpointInstrumentingMiddleware(duration metrics.TimeHistogram) endpoint.Middleware {
+	return func(next endpoint.Endpoint) endpoint.Endpoint {
+		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+
+			defer func(begin time.Time) {
+				f := metrics.Field{Key: "success", Value: fmt.Sprint(err == nil)}
+				duration.With(f).Observe(time.Since(begin))
+			}(time.Now())
+			return next(ctx, request)
+
+		}
+	}
+}
+
+// EndpointLoggingMiddleware returns an endpoint middleware that logs the
+// duration of each invocation, and the resulting error, if any.
+func EndpointLoggingMiddleware(logger log.Logger) endpoint.Middleware {
+	return func(next endpoint.Endpoint) endpoint.Endpoint {
+		return func(ctx context.Context, request interface{}) (response interface{}, err error) {
+
+			defer func(begin time.Time) {
+				logger.Log("error", err, "took", time.Since(begin))
+			}(time.Now())
+			return next(ctx, request)
+
+		}
+	}
+}
+
 // These types are unexported because they only exist to serve the endpoint
-// domain, and are otherwise opaque to all callers.
+// domain, which is totally encapsulated in this package. They are otherwise
+// opaque to all callers.
 
 type sumRequest struct{ A, B int }
 
