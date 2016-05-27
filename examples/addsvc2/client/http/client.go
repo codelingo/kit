@@ -4,12 +4,17 @@ package http
 import (
 	"net/url"
 	"strings"
+	"time"
 
+	jujuratelimit "github.com/juju/ratelimit"
 	stdopentracing "github.com/opentracing/opentracing-go"
+	"github.com/sony/gobreaker"
 
+	"github.com/go-kit/kit/circuitbreaker"
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/examples/addsvc2"
 	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/ratelimit"
 	"github.com/go-kit/kit/tracing/opentracing"
 	httptransport "github.com/go-kit/kit/transport/http"
 )
@@ -26,7 +31,13 @@ func New(instance string, tracer stdopentracing.Tracer, logger log.Logger) (adds
 		return nil, err
 	}
 
-	// TODO(pb): wire in some client-side middlewares
+	// We construct a single ratelimiter middleware, to limit the total outgoing
+	// QPS from this client to all methods on the remote instance. We also
+	// construct per-endpoint circuitbreaker middlewares to demonstrate how
+	// that's done, although they could easily be combined into a single breaker
+	// for the entire remote instance, too.
+
+	limiter := ratelimit.NewTokenBucketLimiter(jujuratelimit.NewBucketWithRate(100, 100))
 
 	var sumEndpoint endpoint.Endpoint
 	{
@@ -38,6 +49,11 @@ func New(instance string, tracer stdopentracing.Tracer, logger log.Logger) (adds
 			httptransport.SetClientBefore(opentracing.FromHTTPRequest(tracer, "Sum", logger)),
 		).Endpoint()
 		sumEndpoint = opentracing.TraceClient(tracer, "Sum")(sumEndpoint)
+		sumEndpoint = limiter(sumEndpoint)
+		sumEndpoint = circuitbreaker.Gobreaker(gobreaker.NewCircuitBreaker(gobreaker.Settings{
+			Name:    "Sum",
+			Timeout: 30 * time.Second,
+		}))(sumEndpoint)
 	}
 
 	var concatEndpoint endpoint.Endpoint
@@ -50,6 +66,11 @@ func New(instance string, tracer stdopentracing.Tracer, logger log.Logger) (adds
 			httptransport.SetClientBefore(opentracing.FromHTTPRequest(tracer, "Concat", logger)),
 		).Endpoint()
 		concatEndpoint = opentracing.TraceClient(tracer, "Concat")(concatEndpoint)
+		concatEndpoint = limiter(concatEndpoint)
+		sumEndpoint = circuitbreaker.Gobreaker(gobreaker.NewCircuitBreaker(gobreaker.Settings{
+			Name:    "Concat",
+			Timeout: 30 * time.Second,
+		}))(sumEndpoint)
 	}
 
 	return addsvc.Endpoints{
