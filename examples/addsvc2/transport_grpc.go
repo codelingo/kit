@@ -1,18 +1,19 @@
 package addsvc
 
 import (
+	stdopentracing "github.com/opentracing/opentracing-go"
 	"golang.org/x/net/context"
 
 	"github.com/go-kit/kit/examples/addsvc2/pb"
 	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/tracing/opentracing"
 	grpctransport "github.com/go-kit/kit/transport/grpc"
 )
 
 // This file provides server-side bindings for the gRPC transport.
 
 // MakeGRPCServer makes a set of endpoints available as a gRPC AddServer.
-func MakeGRPCServer(ctx context.Context, endpoints Endpoints, logger log.Logger) pb.AddServer {
-	// TODO(pb): add tracer
+func MakeGRPCServer(ctx context.Context, endpoints Endpoints, tracer stdopentracing.Tracer, logger log.Logger) pb.AddServer {
 	options := []grpctransport.ServerOption{
 		grpctransport.ServerErrorLogger(logger),
 	}
@@ -22,14 +23,14 @@ func MakeGRPCServer(ctx context.Context, endpoints Endpoints, logger log.Logger)
 			endpoints.SumEndpoint,
 			DecodeGRPCSumRequest,
 			EncodeGRPCSumResponse,
-			options...,
+			append(options, grpctransport.ServerBefore(opentracing.FromGRPCRequest(tracer, "Sum", logger)))...,
 		),
 		concat: grpctransport.NewServer(
 			ctx,
 			endpoints.ConcatEndpoint,
 			DecodeGRPCConcatRequest,
 			EncodeGRPCConcatResponse,
-			options...,
+			append(options, grpctransport.ServerBefore(opentracing.FromGRPCRequest(tracer, "Concat", logger)))...,
 		),
 	}
 }

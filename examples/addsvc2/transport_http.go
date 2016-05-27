@@ -5,9 +5,11 @@ import (
 	"errors"
 	"net/http"
 
+	stdopentracing "github.com/opentracing/opentracing-go"
 	"golang.org/x/net/context"
 
 	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/tracing/opentracing"
 	httptransport "github.com/go-kit/kit/transport/http"
 )
 
@@ -15,7 +17,7 @@ import (
 
 // MakeHTTPHandler returns a handler that makes a set of endpoints available
 // on predefined paths.
-func MakeHTTPHandler(ctx context.Context, endpoints Endpoints, logger log.Logger) http.Handler {
+func MakeHTTPHandler(ctx context.Context, endpoints Endpoints, tracer stdopentracing.Tracer, logger log.Logger) http.Handler {
 	options := []httptransport.ServerOption{
 		httptransport.ServerErrorEncoder(errorEncoder),
 		httptransport.ServerErrorLogger(logger),
@@ -26,14 +28,14 @@ func MakeHTTPHandler(ctx context.Context, endpoints Endpoints, logger log.Logger
 		endpoints.SumEndpoint,
 		DecodeHTTPSumRequest,
 		EncodeHTTPGenericResponse,
-		options...,
+		append(options, httptransport.ServerBefore(opentracing.FromHTTPRequest(tracer, "Sum", logger)))...,
 	))
 	m.Handle("/concat", httptransport.NewServer(
 		ctx,
 		endpoints.ConcatEndpoint,
 		DecodeHTTPConcatRequest,
 		EncodeHTTPGenericResponse,
-		options...,
+		append(options, httptransport.ServerBefore(opentracing.FromHTTPRequest(tracer, "Concat", logger)))...,
 	))
 	return m
 }

@@ -5,17 +5,22 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/http/pprof"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
 	"github.com/apache/thrift/lib/go/thrift"
+	lightstep "github.com/lightstep/lightstep-tracer-go"
+	stdopentracing "github.com/opentracing/opentracing-go"
+	zipkin "github.com/openzipkin/zipkin-go-opentracing"
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
+	appdashot "github.com/sourcegraph/appdash/opentracing"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-
-	"net/http/pprof"
+	"sourcegraph.com/sourcegraph/appdash"
 
 	"github.com/go-kit/kit/endpoint"
 	"github.com/go-kit/kit/examples/addsvc2"
@@ -24,6 +29,7 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/metrics"
 	"github.com/go-kit/kit/metrics/prometheus"
+	"github.com/go-kit/kit/tracing/opentracing"
 )
 
 func main() {
@@ -35,6 +41,9 @@ func main() {
 		thriftProtocol   = flag.String("thrift.protocol", "binary", "binary, compact, json, simplejson")
 		thriftBufferSize = flag.Int("thrift.buffer.size", 0, "0 for unbuffered")
 		thriftFramed     = flag.Bool("thrift.framed", false, "true to enable framing")
+		zipkinAddr       = flag.String("zipkin.addr", "", "Enable Zipkin tracing via a Kafka server host:port")
+		appdashAddr      = flag.String("appdash.addr", "", "Enable Appdash tracing via an Appdash server host:port")
+		lightstepToken   = flag.String("lightstep.token", "", "Enable LightStep tracing via a LightStep access token")
 	)
 	flag.Parse()
 
@@ -73,6 +82,45 @@ func main() {
 		}, []string{"method", "success"}))
 	}
 
+	// Tracing domain
+	var tracer stdopentracing.Tracer
+	{
+		if *zipkinAddr != "" {
+			logger := log.NewContext(logger).With("tracer", "Zipkin")
+			logger.Log("addr", *zipkinAddr)
+			collector, err := zipkin.NewKafkaCollector(
+				strings.Split(*zipkinAddr, ","),
+				zipkin.KafkaLogger(logger),
+			)
+			if err != nil {
+				logger.Log("err", err)
+				os.Exit(1)
+			}
+			tracer, err = zipkin.NewTracer(
+				zipkin.NewRecorder(collector, false, "localhost:80", "addsvc"),
+			)
+			if err != nil {
+				logger.Log("err", err)
+				os.Exit(1)
+			}
+		} else if *appdashAddr != "" {
+			logger := log.NewContext(logger).With("tracer", "Appdash")
+			logger.Log("addr", *appdashAddr)
+			tracer = appdashot.NewTracer(appdash.NewRemoteCollector(*appdashAddr))
+		} else if *lightstepToken != "" {
+			logger := log.NewContext(logger).With("tracer", "LightStep")
+			logger.Log() // probably don't want to print out the token :)
+			tracer = lightstep.NewTracer(lightstep.Options{
+				AccessToken: *lightstepToken,
+			})
+			defer lightstep.FlushLightStepTracer(tracer)
+		} else {
+			logger := log.NewContext(logger).With("tracer", "none")
+			logger.Log()
+			tracer = stdopentracing.GlobalTracer() // no-op
+		}
+	}
+
 	// Business domain
 	var service addsvc.Service
 	{
@@ -88,6 +136,7 @@ func main() {
 		sumLogger := log.NewContext(logger).With("method", "Sum")
 
 		sumEndpoint = addsvc.MakeSumEndpoint(service)
+		sumEndpoint = opentracing.TraceServer(tracer, "Sum")(sumEndpoint)
 		sumEndpoint = addsvc.EndpointInstrumentingMiddleware(sumDuration)(sumEndpoint)
 		sumEndpoint = addsvc.EndpointLoggingMiddleware(sumLogger)(sumEndpoint)
 	}
@@ -97,6 +146,7 @@ func main() {
 		concatLogger := log.NewContext(logger).With("method", "Concat")
 
 		concatEndpoint = addsvc.MakeConcatEndpoint(service)
+		concatEndpoint = opentracing.TraceServer(tracer, "Concat")(concatEndpoint)
 		concatEndpoint = addsvc.EndpointInstrumentingMiddleware(concatDuration)(concatEndpoint)
 		concatEndpoint = addsvc.EndpointLoggingMiddleware(concatLogger)(concatEndpoint)
 	}
@@ -119,6 +169,7 @@ func main() {
 	// Debug listener
 	go func() {
 		logger := log.NewContext(logger).With("transport", "debug")
+
 		m := http.NewServeMux()
 		m.Handle("/debug/pprof/", http.HandlerFunc(pprof.Index))
 		m.Handle("/debug/pprof/cmdline", http.HandlerFunc(pprof.Cmdline))
@@ -126,6 +177,7 @@ func main() {
 		m.Handle("/debug/pprof/symbol", http.HandlerFunc(pprof.Symbol))
 		m.Handle("/debug/pprof/trace", http.HandlerFunc(pprof.Trace))
 		m.Handle("/metrics", stdprometheus.Handler())
+
 		logger.Log("addr", *debugAddr)
 		errc <- http.ListenAndServe(*debugAddr, m)
 	}()
@@ -133,7 +185,7 @@ func main() {
 	// HTTP transport
 	go func() {
 		logger := log.NewContext(logger).With("transport", "HTTP")
-		h := addsvc.MakeHTTPHandler(ctx, endpoints, logger)
+		h := addsvc.MakeHTTPHandler(ctx, endpoints, tracer, logger)
 		logger.Log("addr", *httpAddr)
 		errc <- http.ListenAndServe(*httpAddr, h)
 	}()
@@ -148,7 +200,7 @@ func main() {
 			return
 		}
 
-		srv := addsvc.MakeGRPCServer(ctx, endpoints, logger)
+		srv := addsvc.MakeGRPCServer(ctx, endpoints, tracer, logger)
 		s := grpc.NewServer()
 		pb.RegisterAddServer(s, srv)
 

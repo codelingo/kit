@@ -3,26 +3,29 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/apache/thrift/lib/go/thrift"
+	"github.com/lightstep/lightstep-tracer-go"
+	stdopentracing "github.com/opentracing/opentracing-go"
+	zipkin "github.com/openzipkin/zipkin-go-opentracing"
+	appdashot "github.com/sourcegraph/appdash/opentracing"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"sourcegraph.com/sourcegraph/appdash"
 
 	"github.com/go-kit/kit/examples/addsvc2"
 	grpcclient "github.com/go-kit/kit/examples/addsvc2/client/grpc"
 	httpclient "github.com/go-kit/kit/examples/addsvc2/client/http"
 	thriftclient "github.com/go-kit/kit/examples/addsvc2/client/thrift"
 	thriftadd "github.com/go-kit/kit/examples/addsvc2/thrift/gen-go/addsvc"
-	"google.golang.org/grpc/grpclog"
+	"github.com/go-kit/kit/log"
 )
 
 func main() {
-	grpclog.SetLogger(log.New(os.Stdout, "", 0)) // Ugh! Bad gRPC!
-
 	var (
 		httpAddr         = flag.String("http.addr", "", "HTTP address of addsvc")
 		grpcAddr         = flag.String("grpc.addr", "", "gRPC (HTTP) address of addsvc")
@@ -30,13 +33,48 @@ func main() {
 		thriftProtocol   = flag.String("thrift.protocol", "binary", "binary, compact, json, simplejson")
 		thriftBufferSize = flag.Int("thrift.buffer.size", 0, "0 for unbuffered")
 		thriftFramed     = flag.Bool("thrift.framed", false, "true to enable framing")
+		zipkinAddr       = flag.String("zipkin.addr", "", "Enable Zipkin tracing via a Kafka Collector host:port")
+		appdashAddr      = flag.String("appdash.addr", "", "Enable Appdash tracing via an Appdash server host:port")
+		lightstepToken   = flag.String("lightstep.token", "", "Enable LightStep tracing via a LightStep access token")
 		method           = flag.String("method", "sum", "sum, concat")
 	)
 	flag.Parse()
 
 	if len(flag.Args()) != 2 {
-		fmt.Fprintf(os.Stderr, "error: all methods require 2 arguments\n")
+		fmt.Fprintf(os.Stderr, "usage: addcli [flags] <a> <b>\n")
 		os.Exit(1)
+	}
+
+	// This is a demonstration client, which supports multiple tracers.
+	// Your clients will probably just use one tracer.
+	var tracer stdopentracing.Tracer
+	{
+		if *zipkinAddr != "" {
+			collector, err := zipkin.NewKafkaCollector(
+				strings.Split(*zipkinAddr, ","),
+				zipkin.KafkaLogger(log.NewNopLogger()),
+			)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "%v\n", err)
+				os.Exit(1)
+			}
+			tracer, err = zipkin.NewTracer(
+				zipkin.NewRecorder(collector, false, "localhost:8000", "addcli"),
+			)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "%v\n", err)
+				os.Exit(1)
+			}
+		} else if *appdashAddr != "" {
+			tracer = appdashot.NewTracer(appdash.NewRemoteCollector(*appdashAddr))
+		} else if *lightstepToken != "" {
+			tracer = lightstep.NewTracer(lightstep.Options{
+				AccessToken: *lightstepToken,
+			})
+			defer lightstep.FlushLightStepTracer(tracer)
+		} else {
+			tracer = stdopentracing.GlobalTracer() // no-op
+		}
 	}
 
 	// This is a demonstration client, which supports multiple transports.
@@ -47,7 +85,7 @@ func main() {
 		err     error
 	)
 	if *httpAddr != "" {
-		service, err = httpclient.New(*httpAddr)
+		service, err = httpclient.New(*httpAddr, tracer, log.NewNopLogger())
 	} else if *grpcAddr != "" {
 		conn, err := grpc.Dial(*grpcAddr, grpc.WithInsecure(), grpc.WithTimeout(time.Second))
 		if err != nil {
@@ -55,7 +93,7 @@ func main() {
 			os.Exit(1)
 		}
 		defer conn.Close()
-		service = grpcclient.New(conn)
+		service = grpcclient.New(conn, tracer, log.NewNopLogger())
 	} else if *thriftAddr != "" {
 		// It's necessary to do all of this construction in the func main,
 		// because (among other reasons) we need to control the lifecycle of the
