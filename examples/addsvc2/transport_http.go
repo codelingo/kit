@@ -52,7 +52,8 @@ func errorEncoder(_ context.Context, err error, w http.ResponseWriter) {
 			code = http.StatusBadRequest
 
 		case httptransport.DomainDo:
-			if e.Err == ErrTwoZeroes {
+			switch e.Err {
+			case ErrTwoZeroes, ErrMaxSizeExceeded, ErrIntOverflow:
 				code = http.StatusBadRequest
 			}
 		}
