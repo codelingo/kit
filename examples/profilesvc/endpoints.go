@@ -1,33 +1,33 @@
-package main
+package profilesvc
 
 import (
 	"github.com/go-kit/kit/endpoint"
 	"golang.org/x/net/context"
 )
 
-type endpoints struct {
-	postProfileEndpoint   endpoint.Endpoint
-	getProfileEndpoint    endpoint.Endpoint
-	putProfileEndpoint    endpoint.Endpoint
-	patchProfileEndpoint  endpoint.Endpoint
-	deleteProfileEndpoint endpoint.Endpoint
-	getAddressesEndpoint  endpoint.Endpoint
-	getAddressEndpoint    endpoint.Endpoint
-	postAddressEndpoint   endpoint.Endpoint
-	deleteAddressEndpoint endpoint.Endpoint
+type Endpoints struct {
+	PostProfileEndpoint   endpoint.Endpoint
+	GetProfileEndpoint    endpoint.Endpoint
+	PutProfileEndpoint    endpoint.Endpoint
+	PatchProfileEndpoint  endpoint.Endpoint
+	DeleteProfileEndpoint endpoint.Endpoint
+	GetAddressesEndpoint  endpoint.Endpoint
+	GetAddressEndpoint    endpoint.Endpoint
+	PostAddressEndpoint   endpoint.Endpoint
+	DeleteAddressEndpoint endpoint.Endpoint
 }
 
-func makeEndpoints(s ProfileService) endpoints {
-	return endpoints{
-		postProfileEndpoint:   makePostProfileEndpoint(s),
-		getProfileEndpoint:    makeGetProfileEndpoint(s),
-		putProfileEndpoint:    makePutProfileEndpoint(s),
-		patchProfileEndpoint:  makePatchProfileEndpoint(s),
-		deleteProfileEndpoint: makeDeleteProfileEndpoint(s),
-		getAddressesEndpoint:  makeGetAddressesEndpoint(s),
-		getAddressEndpoint:    makeGetAddressEndpoint(s),
-		postAddressEndpoint:   makePostAddressEndpoint(s),
-		deleteAddressEndpoint: makeDeleteAddressEndpoint(s),
+func MakeEndpoints(s Service) Endpoints {
+	return Endpoints{
+		PostProfileEndpoint:   makePostProfileEndpoint(s),
+		GetProfileEndpoint:    makeGetProfileEndpoint(s),
+		PutProfileEndpoint:    makePutProfileEndpoint(s),
+		PatchProfileEndpoint:  makePatchProfileEndpoint(s),
+		DeleteProfileEndpoint: makeDeleteProfileEndpoint(s),
+		GetAddressesEndpoint:  makeGetAddressesEndpoint(s),
+		GetAddressEndpoint:    makeGetAddressEndpoint(s),
+		PostAddressEndpoint:   makePostAddressEndpoint(s),
+		DeleteAddressEndpoint: makeDeleteAddressEndpoint(s),
 	}
 }
 
@@ -41,18 +41,22 @@ type postProfileResponse struct {
 
 func (r postProfileResponse) error() error { return r.Err }
 
-// Regarding errors returned from service (business logic) methods, we have two
-// options. We could return the error via the endpoint itself. That makes
-// certain things a little bit easier, like providing non-200 HTTP responses to
-// the client. But Go kit assumes that endpoint errors are (or may be treated
-// as) transport-domain errors. For example, an endpoint error will count
-// against a circuit breaker error count. Therefore, it's almost certainly
-// better to return service (business logic) errors in the response object. This
-// means we have to do a bit more work in the HTTP response encoder to detect
-// e.g. a not-found error and provide a proper HTTP status code. That work is
-// done with the errorer interface, in transport.go.
+// We have two options to return errors from the business logic.
+//
+// We could return the error via the endpoint itself. That makes certain things
+// a little bit easier, like providing non-200 HTTP responses to the client. But
+// Go kit assumes that endpoint errors are (or may be treated as)
+// transport-domain errors. For example, an endpoint error will count against a
+// circuit breaker error count.
+//
+// Therefore, it's often better to return service (business logic) errors in the
+// response object. This means we have to do a bit more work in the HTTP
+// response encoder to detect e.g. a not-found error and provide a proper HTTP
+// status code. That work is done with the errorer interface, in transport.go.
+// Response types that may contain business-logic errors implement that
+// interface.
 
-func makePostProfileEndpoint(s ProfileService) endpoint.Endpoint {
+func makePostProfileEndpoint(s Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req := request.(postProfileRequest)
 		e := s.PostProfile(ctx, req.Profile)
@@ -71,7 +75,7 @@ type getProfileResponse struct {
 
 func (r getProfileResponse) error() error { return r.Err }
 
-func makeGetProfileEndpoint(s ProfileService) endpoint.Endpoint {
+func makeGetProfileEndpoint(s Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req := request.(getProfileRequest)
 		p, e := s.GetProfile(ctx, req.ID)
@@ -90,7 +94,7 @@ type putProfileResponse struct {
 
 func (r putProfileResponse) error() error { return nil }
 
-func makePutProfileEndpoint(s ProfileService) endpoint.Endpoint {
+func makePutProfileEndpoint(s Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req := request.(putProfileRequest)
 		e := s.PutProfile(ctx, req.ID, req.Profile)
@@ -109,7 +113,7 @@ type patchProfileResponse struct {
 
 func (r patchProfileResponse) error() error { return r.Err }
 
-func makePatchProfileEndpoint(s ProfileService) endpoint.Endpoint {
+func makePatchProfileEndpoint(s Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req := request.(patchProfileRequest)
 		e := s.PatchProfile(ctx, req.ID, req.Profile)
@@ -127,7 +131,7 @@ type deleteProfileResponse struct {
 
 func (r deleteProfileResponse) error() error { return r.Err }
 
-func makeDeleteProfileEndpoint(s ProfileService) endpoint.Endpoint {
+func makeDeleteProfileEndpoint(s Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req := request.(deleteProfileRequest)
 		e := s.DeleteProfile(ctx, req.ID)
@@ -146,7 +150,7 @@ type getAddressesResponse struct {
 
 func (r getAddressesResponse) error() error { return r.Err }
 
-func makeGetAddressesEndpoint(s ProfileService) endpoint.Endpoint {
+func makeGetAddressesEndpoint(s Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req := request.(getAddressesRequest)
 		a, e := s.GetAddresses(ctx, req.ProfileID)
@@ -166,7 +170,7 @@ type getAddressResponse struct {
 
 func (r getAddressResponse) error() error { return r.Err }
 
-func makeGetAddressEndpoint(s ProfileService) endpoint.Endpoint {
+func makeGetAddressEndpoint(s Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req := request.(getAddressRequest)
 		a, e := s.GetAddress(ctx, req.ProfileID, req.AddressID)
@@ -185,7 +189,7 @@ type postAddressResponse struct {
 
 func (r postAddressResponse) error() error { return r.Err }
 
-func makePostAddressEndpoint(s ProfileService) endpoint.Endpoint {
+func makePostAddressEndpoint(s Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req := request.(postAddressRequest)
 		e := s.PostAddress(ctx, req.ProfileID, req.Address)
@@ -204,7 +208,7 @@ type deleteAddressResponse struct {
 
 func (r deleteAddressResponse) error() error { return r.Err }
 
-func makeDeleteAddressEndpoint(s ProfileService) endpoint.Endpoint {
+func makeDeleteAddressEndpoint(s Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		req := request.(deleteAddressRequest)
 		e := s.DeleteAddress(ctx, req.ProfileID, req.AddressID)
