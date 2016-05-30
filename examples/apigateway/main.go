@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -61,77 +63,85 @@ func main() {
 		client = consulsd.NewClient(consulClient)
 	}
 
-	// Context domain.
+	// Transport domain.
+	tracer := stdopentracing.GlobalTracer() // no-op
 	ctx := context.Background()
-
-	// Set up our routes.
-	//
-	// Each Consul service name resolves to multiple instances of that service.
-	// We connect to each instance according to its pre-determined transport: in
-	// this case, we choose to access addsvc via its gRPC client, and stringsvc
-	// over plain transport/http (as it has no client package).
-	//
-	// Each service instance implements multiple methods, and we want to map
-	// each method to a unique path on the API gateway. So, we define that path
-	// and its corresponding factory function, which takes an instance string
-	// and returns an endpoint.Endpoint for the specific method.
-	//
-	// Finally, we mount that path + endpoint handler into the router.
 	r := mux.NewRouter()
-	for consulServiceName, methods := range map[string][]struct {
-		tags        []string
-		passingOnly bool
-		path        string
-		factory     sd.Factory
-	}{
-		"addsvc": {
-			{
-				tags:        []string{}, // you might have e.g. "prod"
-				passingOnly: true,
-				path:        "/api/addsvc/sum",
-				factory:     grpcFactory(addsvc.MakeSumEndpoint, logger),
-			},
-			{
-				tags:        []string{},
-				passingOnly: true,
-				path:        "/api/addsvc/concat",
-				factory:     grpcFactory(addsvc.MakeConcatEndpoint, logger),
-			},
-		},
-		"stringsvc": {
-			{
-				tags:        []string{},
-				passingOnly: true,
-				path:        "/api/stringsvc/uppercase",
-				factory:     httpFactory(ctx, "GET", "uppercase/"),
-			},
-			{
-				tags:        []string{},
-				passingOnly: true,
-				path:        "/api/stringsvc/concat",
-				factory:     httpFactory(ctx, "GET", "concat/"),
-			},
-		},
-	} {
-		for _, method := range methods {
-			subscriber, err := consulsd.NewSubscriber(
-				client,
-				method.factory,
-				logger,
-				consulServiceName,
-				method.tags,
-				method.passingOnly,
-			)
-			if err != nil {
-				logger.Log("service", consulServiceName, "path", method.path, "err", err)
-				continue
-			}
 
+	// Now we begin installing the routes. Each route corresponds to a single
+	// method: sum, concat, uppercase, and count.
+
+	// addsvc routes.
+	{
+		// Each method gets constructed with a factory. Factories take an
+		// instance string, and return a specific endpoint. In the factory we
+		// dial the instance string we get from Consul, and then leverage an
+		// addsvc client package to construct a complete service. We can then
+		// leverage the addsvc.Make{Sum,Concat}Endpoint constructors to convert
+		// the complete service to specific endpoint.
+
+		var (
+			tags        = []string{}
+			passingOnly = true
+			endpoints   = addsvc.Endpoints{}
+		)
+		{
+			factory := addsvcFactory(addsvc.MakeSumEndpoint, tracer, logger)
+			subscriber := consulsd.NewSubscriber(client, factory, logger, "addsvc", tags, passingOnly)
 			balancer := lb.NewRoundRobin(subscriber)
-			endpoint := lb.Retry(*retryMax, *retryTimeout, balancer)
-			handler := makeHandler(ctx, endpoint, logger)
-			r.HandleFunc(method.path, handler)
+			retry := lb.Retry(*retryMax, *retryTimeout, balancer)
+			endpoints.SumEndpoint = retry
 		}
+		{
+			factory := addsvcFactory(addsvc.MakeConcatEndpoint, tracer, logger)
+			subscriber := consulsd.NewSubscriber(client, factory, logger, "addsvc", tags, passingOnly)
+			balancer := lb.NewRoundRobin(subscriber)
+			retry := lb.Retry(*retryMax, *retryTimeout, balancer)
+			endpoints.ConcatEndpoint = retry
+		}
+
+		// Here we leverage the fact that addsvc comes with a constructor for an
+		// HTTP handler, and just install it under a particular path prefix in
+		// our router.
+
+		r.PathPrefix("addsvc/").Handler(addsvc.MakeHTTPHandler(ctx, endpoints, tracer, logger))
+	}
+
+	// stringsvc routes.
+	{
+		// addsvc had lots of nice importable Go packages we could leverage.
+		// With stringsvc we are not so fortunate, it just has some endpoints
+		// that we assume will exist. So we have to write that logic here. This
+		// is by design, so you can see two totally different methods of
+		// proxying to a remote service.
+
+		var (
+			tags        = []string{}
+			passingOnly = true
+			uppercase   endpoint.Endpoint
+			count       endpoint.Endpoint
+		)
+		{
+			factory := stringsvcFactory(ctx, "GET", "/uppercase")
+			subscriber := consulsd.NewSubscriber(client, factory, logger, "stringsvc", tags, passingOnly)
+			balancer := lb.NewRoundRobin(subscriber)
+			retry := lb.Retry(*retryMax, *retryTimeout, balancer)
+			uppercase = retry
+		}
+		{
+			factory := stringsvcFactory(ctx, "GET", "/count")
+			subscriber := consulsd.NewSubscriber(client, factory, logger, "stringsvc", tags, passingOnly)
+			balancer := lb.NewRoundRobin(subscriber)
+			retry := lb.Retry(*retryMax, *retryTimeout, balancer)
+			count = retry
+		}
+
+		// We can use the transport/http.Server to act as our handler, all we
+		// have to do provide it with the encode and decode functions for our
+		// stringsvc methods.
+
+		r.Handle("/stringsvc/uppercase", httptransport.NewServer(ctx, uppercase, decodeUppercaseRequest, encodeJSONResponse))
+		r.Handle("/stringsvc/count", httptransport.NewServer(ctx, count, decodeCountRequest, encodeJSONResponse))
 	}
 
 	// Interrupt handler.
@@ -152,14 +162,17 @@ func main() {
 	logger.Log("exit", <-errc)
 }
 
-func grpcFactory(makeEndpoint func(addsvc.Service) endpoint.Endpoint, logger log.Logger) sd.Factory {
+func addsvcFactory(makeEndpoint func(addsvc.Service) endpoint.Endpoint, tracer stdopentracing.Tracer, logger log.Logger) sd.Factory {
 	return func(instance string) (endpoint.Endpoint, io.Closer, error) {
+		// We could just as easily use the HTTP or Thrift client package to make
+		// the connection to addsvc. We've chosen gRPC arbitrarily. Note that
+		// the transport is an implementation detail: it doesn't leak out of
+		// this function. Nice!
+
 		conn, err := grpc.Dial(instance, grpc.WithInsecure())
 		if err != nil {
 			return nil, nil, err
 		}
-
-		tracer := stdopentracing.GlobalTracer() // no-op tracer
 		service := addsvcgrpcclient.New(conn, tracer, logger)
 		endpoint := makeEndpoint(service)
 
@@ -174,56 +187,96 @@ func grpcFactory(makeEndpoint func(addsvc.Service) endpoint.Endpoint, logger log
 	}
 }
 
-// TODO(pb): -- refactoring from this line ---
-
-func httpFactory(ctx context.Context, method, path string) sd.Factory {
+func stringsvcFactory(ctx context.Context, method, path string) sd.Factory {
 	return func(instance string) (endpoint.Endpoint, io.Closer, error) {
 		if !strings.HasPrefix(instance, "http") {
 			instance = "http://" + instance
 		}
-
-		u, err := url.Parse(instance)
+		tgt, err := url.Parse(instance)
 		if err != nil {
 			return nil, nil, err
 		}
-		u.Path = path
+		tgt.Path = path
 
-		return httptransport.NewClient(
-			method,
-			u,
-			passEncode,
-			passDecode,
-		).Endpoint(), nil, nil
+		// Since stringsvc doesn't have any kind of package we can import, or
+		// any formal spec, we are forced to just assert where the endpoints
+		// live, and write our own code to encode and decode requests and
+		// responses. Ideally, if you write the service, you will want to
+		// provide stronger guarantees to your clients.
+
+		var (
+			enc httptransport.EncodeRequestFunc
+			dec httptransport.DecodeResponseFunc
+		)
+		switch path {
+		case "/uppercase":
+			enc, dec = encodeJSONRequest, decodeUppercaseResponse
+		case "/count":
+			enc, dec = encodeJSONRequest, decodeCountResponse
+		default:
+			return nil, nil, fmt.Errorf("unknown stringsvc path %q", path)
+		}
+
+		return httptransport.NewClient(method, tgt, enc, dec).Endpoint(), nil, nil
 	}
 }
 
-func makeHandler(ctx context.Context, e endpoint.Endpoint, logger log.Logger) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		resp, err := e(ctx, r.Body)
-		if err != nil {
-			logger.Log("err", err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		b, ok := resp.([]byte)
-		if !ok {
-			logger.Log("err", "endpoint response is not of type []byte")
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		_, err = w.Write(b)
-		if err != nil {
-			logger.Log("err", err)
-			return
-		}
+func encodeJSONRequest(_ context.Context, req *http.Request, request interface{}) error {
+	// Both uppercase and count requests are encoded in the same way:
+	// simple JSON serialization to the request body.
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(request); err != nil {
+		return err
 	}
-}
-
-func passEncode(_ context.Context, r *http.Request, request interface{}) error {
-	r.Body = request.(io.ReadCloser)
+	req.Body = ioutil.NopCloser(&buf)
 	return nil
 }
 
-func passDecode(_ context.Context, r *http.Response) (interface{}, error) {
-	return ioutil.ReadAll(r.Body)
+func encodeJSONResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	return json.NewEncoder(w).Encode(response)
+}
+
+// I've just copied these functions from stringsvc3/transport.go, inlining the
+// struct definitions.
+
+func decodeUppercaseResponse(ctx context.Context, resp *http.Response) (interface{}, error) {
+	var response struct {
+		V   string `json:"v"`
+		Err string `json:"err,omitempty"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return nil, err
+	}
+	return response, nil
+}
+
+func decodeCountResponse(ctx context.Context, resp *http.Response) (interface{}, error) {
+	var response struct {
+		V int `json:"v"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return nil, err
+	}
+	return response, nil
+}
+
+func decodeUppercaseRequest(ctx context.Context, req *http.Request) (interface{}, error) {
+	var request struct {
+		S string `json:"s"`
+	}
+	if err := json.NewDecoder(req.Body).Decode(&request); err != nil {
+		return nil, err
+	}
+	return request, nil
+}
+
+func decodeCountRequest(ctx context.Context, req *http.Request) (interface{}, error) {
+	var request struct {
+		S string `json:"s"`
+	}
+	if err := json.NewDecoder(req.Body).Decode(&request); err != nil {
+		return nil, err
+	}
+	return request, nil
 }
