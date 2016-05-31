@@ -4,8 +4,10 @@ package addsvc
 // It utilizes the transport/http.Server.
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"net/http"
 
 	stdopentracing "github.com/opentracing/opentracing-go"
@@ -73,4 +75,67 @@ func errorDecoder(r *http.Response) error {
 
 type errorWrapper struct {
 	Error string `json:"error"`
+}
+
+// DecodeHTTPSumRequest is a transport/http.DecodeRequestFunc that decodes a
+// JSON-encoded sum request from the HTTP request body. Primarily useful in a
+// server.
+func DecodeHTTPSumRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	var req sumRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	return req, err
+}
+
+// DecodeHTTPConcatRequest is a transport/http.DecodeRequestFunc that decodes a
+// JSON-encoded concat request from the HTTP request body. Primarily useful in a
+// server.
+func DecodeHTTPConcatRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	var req concatRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	return req, err
+}
+
+// DecodeHTTPSumResponse is a transport/http.DecodeResponseFunc that decodes a
+// JSON-encoded sum response from the HTTP response body. If the response has a
+// non-200 status code, we will interpret that as an error and attempt to decode
+// the specific error message from the response body. Primarily useful in a
+// client.
+func DecodeHTTPSumResponse(_ context.Context, r *http.Response) (interface{}, error) {
+	if r.StatusCode != http.StatusOK {
+		return nil, errorDecoder(r)
+	}
+	var resp sumResponse
+	err := json.NewDecoder(r.Body).Decode(&resp)
+	return resp, err
+}
+
+// DecodeHTTPConcatResponse is a transport/http.DecodeResponseFunc that decodes
+// a JSON-encoded concat response from the HTTP response body. If the response
+// has a non-200 status code, we will interpret that as an error and attempt to
+// decode the specific error message from the response body. Primarily useful in
+// a client.
+func DecodeHTTPConcatResponse(_ context.Context, r *http.Response) (interface{}, error) {
+	if r.StatusCode != http.StatusOK {
+		return nil, errorDecoder(r)
+	}
+	var resp concatResponse
+	err := json.NewDecoder(r.Body).Decode(&resp)
+	return resp, err
+}
+
+// EncodeHTTPGenericRequest is a transport/http.EncodeRequestFunc that
+// JSON-encodes any request to the request body. Primarily useful in a client.
+func EncodeHTTPGenericRequest(_ context.Context, r *http.Request, request interface{}) error {
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(request); err != nil {
+		return err
+	}
+	r.Body = ioutil.NopCloser(&buf)
+	return nil
+}
+
+// EncodeHTTPGenericResponse is a transport/http.EncodeResponseFunc that encodes
+// the response as JSON to the response writer. Primarily useful in a server.
+func EncodeHTTPGenericResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
+	return json.NewEncoder(w).Encode(response)
 }

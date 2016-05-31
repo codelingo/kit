@@ -6,17 +6,12 @@ package addsvc
 // formats. It also includes endpoint middlewares.
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"time"
 
 	"golang.org/x/net/context"
 
 	"github.com/go-kit/kit/endpoint"
-	"github.com/go-kit/kit/examples/addsvc/pb"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/metrics"
 )
@@ -134,126 +129,3 @@ type sumResponse struct{ V int }
 type concatRequest struct{ A, B string }
 
 type concatResponse struct{ V string }
-
-// DecodeHTTPSumRequest is a transport/http.DecodeRequestFunc that decodes a
-// JSON-encoded sum request from the HTTP request body. Primarily useful in a
-// server.
-func DecodeHTTPSumRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	var req sumRequest
-	err := json.NewDecoder(r.Body).Decode(&req)
-	return req, err
-}
-
-// DecodeHTTPConcatRequest is a transport/http.DecodeRequestFunc that decodes a
-// JSON-encoded concat request from the HTTP request body. Primarily useful in a
-// server.
-func DecodeHTTPConcatRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	var req concatRequest
-	err := json.NewDecoder(r.Body).Decode(&req)
-	return req, err
-}
-
-// DecodeHTTPSumResponse is a transport/http.DecodeResponseFunc that decodes a
-// JSON-encoded sum response from the HTTP response body. If the response has a
-// non-200 status code, we will interpret that as an error and attempt to decode
-// the specific error message from the response body. Primarily useful in a
-// client.
-func DecodeHTTPSumResponse(_ context.Context, r *http.Response) (interface{}, error) {
-	if r.StatusCode != http.StatusOK {
-		return nil, errorDecoder(r)
-	}
-	var resp sumResponse
-	err := json.NewDecoder(r.Body).Decode(&resp)
-	return resp, err
-}
-
-// DecodeHTTPConcatResponse is a transport/http.DecodeResponseFunc that decodes
-// a JSON-encoded concat response from the HTTP response body. If the response
-// has a non-200 status code, we will interpret that as an error and attempt to
-// decode the specific error message from the response body. Primarily useful in
-// a client.
-func DecodeHTTPConcatResponse(_ context.Context, r *http.Response) (interface{}, error) {
-	if r.StatusCode != http.StatusOK {
-		return nil, errorDecoder(r)
-	}
-	var resp concatResponse
-	err := json.NewDecoder(r.Body).Decode(&resp)
-	return resp, err
-}
-
-// DecodeGRPCSumRequest is a transport/grpc.DecodeRequestFunc that converts a
-// gRPC sum request to a user-domain sum request. Primarily useful in a server.
-func DecodeGRPCSumRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
-	req := grpcReq.(*pb.SumRequest)
-	return sumRequest{A: int(req.A), B: int(req.B)}, nil
-}
-
-// DecodeGRPCConcatRequest is a transport/grpc.DecodeRequestFunc that converts a
-// gRPC concat request to a user-domain concat request. Primarily useful in a
-// server.
-func DecodeGRPCConcatRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
-	req := grpcReq.(*pb.ConcatRequest)
-	return concatRequest{A: req.A, B: req.B}, nil
-}
-
-// DecodeGRPCSumResponse is a transport/grpc.DecodeResponseFunc that converts a
-// gRPC sum reply to a user-domain sum response. Primarily useful in a client.
-func DecodeGRPCSumResponse(_ context.Context, grpcReply interface{}) (interface{}, error) {
-	reply := grpcReply.(*pb.SumReply)
-	return sumResponse{V: int(reply.V)}, nil
-}
-
-// DecodeGRPCConcatResponse is a transport/grpc.DecodeResponseFunc that converts
-// a gRPC concat reply to a user-domain concat response. Primarily useful in a
-// client.
-func DecodeGRPCConcatResponse(_ context.Context, grpcReply interface{}) (interface{}, error) {
-	reply := grpcReply.(*pb.ConcatReply)
-	return concatResponse{V: reply.V}, nil
-}
-
-// EncodeGRPCSumResponse is a transport/grpc.EncodeResponseFunc that converts a
-// user-domain sum response to a gRPC sum reply. Primarily useful in a server.
-func EncodeGRPCSumResponse(_ context.Context, response interface{}) (interface{}, error) {
-	resp := response.(sumResponse)
-	return &pb.SumReply{V: int64(resp.V)}, nil
-}
-
-// EncodeGRPCConcatResponse is a transport/grpc.EncodeResponseFunc that converts
-// a user-domain concat response to a gRPC concat reply. Primarily useful in a
-// server.
-func EncodeGRPCConcatResponse(_ context.Context, response interface{}) (interface{}, error) {
-	resp := response.(concatResponse)
-	return &pb.ConcatReply{V: resp.V}, nil
-}
-
-// EncodeGRPCSumRequest is a transport/grpc.EncodeRequestFunc that converts a
-// user-domain sum request to a gRPC sum request. Primarily useful in a client.
-func EncodeGRPCSumRequest(_ context.Context, request interface{}) (interface{}, error) {
-	req := request.(sumRequest)
-	return &pb.SumRequest{A: int64(req.A), B: int64(req.B)}, nil
-}
-
-// EncodeGRPCConcatRequest is a transport/grpc.EncodeRequestFunc that converts a
-// user-domain concat request to a gRPC concat request. Primarily useful in a
-// client.
-func EncodeGRPCConcatRequest(_ context.Context, request interface{}) (interface{}, error) {
-	req := request.(concatRequest)
-	return &pb.ConcatRequest{A: req.A, B: req.B}, nil
-}
-
-// EncodeHTTPGenericRequest is a transport/http.EncodeRequestFunc that
-// JSON-encodes any request to the request body. Primarily useful in a client.
-func EncodeHTTPGenericRequest(_ context.Context, r *http.Request, request interface{}) error {
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(request); err != nil {
-		return err
-	}
-	r.Body = ioutil.NopCloser(&buf)
-	return nil
-}
-
-// EncodeHTTPGenericResponse is a transport/http.EncodeResponseFunc that encodes
-// the response as JSON to the response writer. Primarily useful in a server.
-func EncodeHTTPGenericResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
-	return json.NewEncoder(w).Encode(response)
-}

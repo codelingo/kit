@@ -26,10 +26,17 @@ import (
 )
 
 func main() {
+	// The addcli presumes no service discovery system, and expects users to
+	// provide the direct address of an addsvc. This presumption is reflected in
+	// the addcli binary and the the client packages: the -transport.addr flags
+	// and various client constructors both expect host:port strings. For an
+	// example service with a client built on top of a service discovery system,
+	// see profilesvc.
+
 	var (
 		httpAddr         = flag.String("http.addr", "", "HTTP address of addsvc")
 		grpcAddr         = flag.String("grpc.addr", "", "gRPC (HTTP) address of addsvc")
-		thriftAddr       = flag.String("thrift.addr", ":8082", "Thrift listen address")
+		thriftAddr       = flag.String("thrift.addr", "", "Thrift address of addsvc")
 		thriftProtocol   = flag.String("thrift.protocol", "binary", "binary, compact, json, simplejson")
 		thriftBufferSize = flag.Int("thrift.buffer.size", 0, "0 for unbuffered")
 		thriftFramed     = flag.Bool("thrift.framed", false, "true to enable framing")
