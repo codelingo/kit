@@ -16,7 +16,7 @@ import (
 	"github.com/go-kit/kit/metrics"
 )
 
-// Endpoints collects all of the endpoints that compose an AddService. It's
+// Endpoints collects all of the endpoints that compose an add service. It's
 // meant to be used as a helper struct, to collect all of the endpoints into a
 // single parameter.
 //
