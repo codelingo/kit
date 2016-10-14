@@ -9,7 +9,7 @@ import (
 
 	"golang.org/x/net/context"
 
-	httptransport "github.com/go-kit/kit/transport/httprp"
+	httptransport "github.com/codelingo/kit/transport/httprp"
 )
 
 func TestServerHappyPathSingleServer(t *testing.T) {

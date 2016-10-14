@@ -3,8 +3,8 @@ package statsd
 import (
 	"testing"
 
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/metrics/teststat"
+	"github.com/codelingo/kit/log"
+	"github.com/codelingo/kit/metrics/teststat"
 )
 
 func TestCounter(t *testing.T) {

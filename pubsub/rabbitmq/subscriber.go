@@ -5,7 +5,7 @@ import (
 
 	"github.com/streadway/amqp"
 
-	"github.com/go-kit/kit/pubsub"
+	"github.com/codelingo/kit/pubsub"
 )
 
 type subscriber struct {

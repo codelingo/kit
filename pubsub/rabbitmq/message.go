@@ -6,7 +6,7 @@ import (
 
 	"github.com/streadway/amqp"
 
-	"github.com/go-kit/kit/pubsub"
+	"github.com/codelingo/kit/pubsub"
 )
 
 // Message is a minimal interface to describe payloads received by subscribers.

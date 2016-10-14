@@ -9,8 +9,8 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/go-kit/kit/endpoint"
-	"github.com/go-kit/kit/sd"
+	"github.com/codelingo/kit/endpoint"
+	"github.com/codelingo/kit/sd"
 )
 
 func TestRoundRobin(t *testing.T) {

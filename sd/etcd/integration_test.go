@@ -10,8 +10,8 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/go-kit/kit/endpoint"
-	"github.com/go-kit/kit/log"
+	"github.com/codelingo/kit/endpoint"
+	"github.com/codelingo/kit/log"
 )
 
 // Package sd/etcd provides a wrapper around the etcd key/value store. This

@@ -4,8 +4,8 @@ import (
 	"errors"
 	"os"
 
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/log/term"
+	"github.com/codelingo/kit/log"
+	"github.com/codelingo/kit/log/term"
 )
 
 func ExampleNewLogger_redErrors() {

@@ -6,9 +6,9 @@ import (
 	"net"
 	"time"
 
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/metrics"
-	"github.com/go-kit/kit/util/conn"
+	"github.com/codelingo/kit/log"
+	"github.com/codelingo/kit/metrics"
+	"github.com/codelingo/kit/util/conn"
 )
 
 // Emitter is a struct to manage connections and orchestrate the emission of

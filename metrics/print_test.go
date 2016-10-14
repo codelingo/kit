@@ -6,9 +6,9 @@ import (
 
 	"math"
 
-	"github.com/go-kit/kit/metrics"
-	"github.com/go-kit/kit/metrics/expvar"
-	"github.com/go-kit/kit/metrics/teststat"
+	"github.com/codelingo/kit/metrics"
+	"github.com/codelingo/kit/metrics/expvar"
+	"github.com/codelingo/kit/metrics/teststat"
 )
 
 func TestPrintDistribution(t *testing.T) {

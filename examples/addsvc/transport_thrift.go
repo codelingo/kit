@@ -9,8 +9,8 @@ package addsvc
 import (
 	"golang.org/x/net/context"
 
-	"github.com/go-kit/kit/endpoint"
-	thriftadd "github.com/go-kit/kit/examples/addsvc/thrift/gen-go/addsvc"
+	"github.com/codelingo/kit/endpoint"
+	thriftadd "github.com/codelingo/kit/examples/addsvc/thrift/gen-go/addsvc"
 )
 
 // MakeThriftHandler makes a set of endpoints available as a Thrift service.

@@ -8,8 +8,8 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/go-kit/kit/log"
-	kitot "github.com/go-kit/kit/tracing/opentracing"
+	"github.com/codelingo/kit/log"
+	kitot "github.com/codelingo/kit/tracing/opentracing"
 )
 
 func TestTraceGRPCRequestRoundtrip(t *testing.T) {

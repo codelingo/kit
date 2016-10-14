@@ -6,14 +6,14 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/metrics"
-	"github.com/go-kit/kit/metrics/discard"
-	"github.com/go-kit/kit/metrics/dogstatsd"
-	kitexp "github.com/go-kit/kit/metrics/expvar"
-	"github.com/go-kit/kit/metrics/graphite"
-	kitprom "github.com/go-kit/kit/metrics/prometheus"
-	"github.com/go-kit/kit/metrics/statsd"
+	"github.com/codelingo/kit/log"
+	"github.com/codelingo/kit/metrics"
+	"github.com/codelingo/kit/metrics/discard"
+	"github.com/codelingo/kit/metrics/dogstatsd"
+	kitexp "github.com/codelingo/kit/metrics/expvar"
+	"github.com/codelingo/kit/metrics/graphite"
+	kitprom "github.com/codelingo/kit/metrics/prometheus"
+	"github.com/codelingo/kit/metrics/statsd"
 )
 
 // Provider represents a union set of constructors and lifecycle management

@@ -1,8 +1,8 @@
 package provider
 
 import (
-	"github.com/go-kit/kit/metrics"
-	"github.com/go-kit/kit/metrics/circonus"
+	"github.com/codelingo/kit/metrics"
+	"github.com/codelingo/kit/metrics/circonus"
 )
 
 type circonusProvider struct {

@@ -3,10 +3,10 @@ package zk
 import (
 	"github.com/samuel/go-zookeeper/zk"
 
-	"github.com/go-kit/kit/endpoint"
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/sd"
-	"github.com/go-kit/kit/sd/cache"
+	"github.com/codelingo/kit/endpoint"
+	"github.com/codelingo/kit/log"
+	"github.com/codelingo/kit/sd"
+	"github.com/codelingo/kit/sd/cache"
 )
 
 // Subscriber yield endpoints stored in a certain ZooKeeper path. Any kind of

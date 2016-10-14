@@ -24,8 +24,8 @@ A simple counter, exported via expvar.
 
 ```go
 import (
-	"github.com/go-kit/kit/metrics"
-	"github.com/go-kit/kit/metrics/expvar"
+	"github.com/codelingo/kit/metrics"
+	"github.com/codelingo/kit/metrics/expvar"
 )
 
 func main() {
@@ -44,8 +44,8 @@ import (
 
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 
-	"github.com/go-kit/kit/metrics"
-	"github.com/go-kit/kit/metrics/prometheus"
+	"github.com/codelingo/kit/metrics"
+	"github.com/codelingo/kit/metrics/prometheus"
 )
 
 func main() {
@@ -73,8 +73,8 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/go-kit/kit/metrics"
-	"github.com/go-kit/kit/metrics/statsd"
+	"github.com/codelingo/kit/metrics"
+	"github.com/codelingo/kit/metrics/statsd"
 )
 
 func main() {

@@ -3,7 +3,7 @@ package etcd
 import (
 	etcd "github.com/coreos/etcd/client"
 
-	"github.com/go-kit/kit/log"
+	"github.com/codelingo/kit/log"
 )
 
 // Registrar registers service instance liveness information to etcd.

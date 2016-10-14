@@ -10,7 +10,7 @@ import (
 	"github.com/codahale/hdrhistogram"
 	stdinflux "github.com/influxdata/influxdb/client/v2"
 
-	"github.com/go-kit/kit/metrics"
+	"github.com/codelingo/kit/metrics"
 )
 
 type counter struct {

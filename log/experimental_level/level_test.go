@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/log/experimental_level"
+	"github.com/codelingo/kit/log"
+	"github.com/codelingo/kit/log/experimental_level"
 )
 
 func TestVariousLevels(t *testing.T) {

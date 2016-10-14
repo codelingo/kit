@@ -10,8 +10,8 @@ import (
 
 	influxdb "github.com/influxdata/influxdb/client/v2"
 
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/metrics/teststat"
+	"github.com/codelingo/kit/log"
+	"github.com/codelingo/kit/metrics/teststat"
 )
 
 func TestCounter(t *testing.T) {

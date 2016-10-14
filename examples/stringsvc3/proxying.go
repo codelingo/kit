@@ -11,13 +11,13 @@ import (
 	"github.com/sony/gobreaker"
 	"golang.org/x/net/context"
 
-	"github.com/go-kit/kit/circuitbreaker"
-	"github.com/go-kit/kit/endpoint"
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/ratelimit"
-	"github.com/go-kit/kit/sd"
-	"github.com/go-kit/kit/sd/lb"
-	httptransport "github.com/go-kit/kit/transport/http"
+	"github.com/codelingo/kit/circuitbreaker"
+	"github.com/codelingo/kit/endpoint"
+	"github.com/codelingo/kit/log"
+	"github.com/codelingo/kit/ratelimit"
+	"github.com/codelingo/kit/sd"
+	"github.com/codelingo/kit/sd/lb"
+	httptransport "github.com/codelingo/kit/transport/http"
 )
 
 func proxyingMiddleware(instances string, ctx context.Context, logger log.Logger) ServiceMiddleware {

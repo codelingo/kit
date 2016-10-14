@@ -7,11 +7,11 @@ import (
 	jujuratelimit "github.com/juju/ratelimit"
 	"github.com/sony/gobreaker"
 
-	"github.com/go-kit/kit/circuitbreaker"
-	"github.com/go-kit/kit/endpoint"
-	"github.com/go-kit/kit/examples/addsvc"
-	thriftadd "github.com/go-kit/kit/examples/addsvc/thrift/gen-go/addsvc"
-	"github.com/go-kit/kit/ratelimit"
+	"github.com/codelingo/kit/circuitbreaker"
+	"github.com/codelingo/kit/endpoint"
+	"github.com/codelingo/kit/examples/addsvc"
+	thriftadd "github.com/codelingo/kit/examples/addsvc/thrift/gen-go/addsvc"
+	"github.com/codelingo/kit/ratelimit"
 )
 
 // New returns an AddService backed by a Thrift server described by the provided

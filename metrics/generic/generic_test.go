@@ -9,8 +9,8 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/go-kit/kit/metrics/generic"
-	"github.com/go-kit/kit/metrics/teststat"
+	"github.com/codelingo/kit/metrics/generic"
+	"github.com/codelingo/kit/metrics/teststat"
 )
 
 func TestCounter(t *testing.T) {

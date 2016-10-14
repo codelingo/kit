@@ -20,14 +20,14 @@ import (
 	stdopentracing "github.com/opentracing/opentracing-go"
 	"golang.org/x/net/context"
 
-	"github.com/go-kit/kit/endpoint"
-	"github.com/go-kit/kit/examples/addsvc"
-	addsvcgrpcclient "github.com/go-kit/kit/examples/addsvc/client/grpc"
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/sd"
-	consulsd "github.com/go-kit/kit/sd/consul"
-	"github.com/go-kit/kit/sd/lb"
-	httptransport "github.com/go-kit/kit/transport/http"
+	"github.com/codelingo/kit/endpoint"
+	"github.com/codelingo/kit/examples/addsvc"
+	addsvcgrpcclient "github.com/codelingo/kit/examples/addsvc/client/grpc"
+	"github.com/codelingo/kit/log"
+	"github.com/codelingo/kit/sd"
+	consulsd "github.com/codelingo/kit/sd/consul"
+	"github.com/codelingo/kit/sd/lb"
+	httptransport "github.com/codelingo/kit/transport/http"
 	"google.golang.org/grpc"
 )
 

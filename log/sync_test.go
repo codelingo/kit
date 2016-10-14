@@ -5,7 +5,7 @@ import (
 	"io"
 	"testing"
 
-	"github.com/go-kit/kit/log"
+	"github.com/codelingo/kit/log"
 )
 
 func TestSwapLogger(t *testing.T) {

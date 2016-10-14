@@ -8,12 +8,12 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/go-kit/kit/circuitbreaker"
-	"github.com/go-kit/kit/endpoint"
-	"github.com/go-kit/kit/examples/shipping/cargo"
-	"github.com/go-kit/kit/examples/shipping/location"
-	"github.com/go-kit/kit/examples/shipping/voyage"
-	kithttp "github.com/go-kit/kit/transport/http"
+	"github.com/codelingo/kit/circuitbreaker"
+	"github.com/codelingo/kit/endpoint"
+	"github.com/codelingo/kit/examples/shipping/cargo"
+	"github.com/codelingo/kit/examples/shipping/location"
+	"github.com/codelingo/kit/examples/shipping/voyage"
+	kithttp "github.com/codelingo/kit/transport/http"
 )
 
 type proxyService struct {

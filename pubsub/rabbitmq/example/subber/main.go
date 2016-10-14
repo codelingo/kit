@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/go-kit/kit/pubsub/rabbitmq"
+	"github.com/codelingo/kit/pubsub/rabbitmq"
 )
 
 type arguments struct {

@@ -3,10 +3,10 @@ package handling
 import (
 	"time"
 
-	"github.com/go-kit/kit/examples/shipping/cargo"
-	"github.com/go-kit/kit/examples/shipping/location"
-	"github.com/go-kit/kit/examples/shipping/voyage"
-	"github.com/go-kit/kit/log"
+	"github.com/codelingo/kit/examples/shipping/cargo"
+	"github.com/codelingo/kit/examples/shipping/location"
+	"github.com/codelingo/kit/examples/shipping/voyage"
+	"github.com/codelingo/kit/log"
 )
 
 type loggingService struct {
