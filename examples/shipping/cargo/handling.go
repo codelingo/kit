@@ -12,8 +12,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/go-kit/kit/examples/shipping/location"
-	"github.com/go-kit/kit/examples/shipping/voyage"
+	"github.com/codelingo/kit/examples/shipping/location"
+	"github.com/codelingo/kit/examples/shipping/voyage"
 )
 
 // HandlingActivity represents how and where a cargo can be handled, and can

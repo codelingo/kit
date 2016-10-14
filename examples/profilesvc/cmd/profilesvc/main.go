@@ -10,8 +10,8 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/go-kit/kit/examples/profilesvc"
-	"github.com/go-kit/kit/log"
+	"github.com/codelingo/kit/examples/profilesvc"
+	"github.com/codelingo/kit/log"
 )
 
 func main() {

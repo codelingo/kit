@@ -4,7 +4,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/go-kit/kit/log"
+	"github.com/codelingo/kit/log"
 )
 
 func Example_basic() {

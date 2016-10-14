@@ -3,7 +3,7 @@ package tracking
 import (
 	"time"
 
-	"github.com/go-kit/kit/log"
+	"github.com/codelingo/kit/log"
 )
 
 type loggingService struct {

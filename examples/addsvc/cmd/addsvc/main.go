@@ -21,14 +21,14 @@ import (
 	"sourcegraph.com/sourcegraph/appdash"
 	appdashot "sourcegraph.com/sourcegraph/appdash/opentracing"
 
-	"github.com/go-kit/kit/endpoint"
-	"github.com/go-kit/kit/examples/addsvc"
-	"github.com/go-kit/kit/examples/addsvc/pb"
-	thriftadd "github.com/go-kit/kit/examples/addsvc/thrift/gen-go/addsvc"
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/metrics"
-	"github.com/go-kit/kit/metrics/prometheus"
-	"github.com/go-kit/kit/tracing/opentracing"
+	"github.com/codelingo/kit/endpoint"
+	"github.com/codelingo/kit/examples/addsvc"
+	"github.com/codelingo/kit/examples/addsvc/pb"
+	thriftadd "github.com/codelingo/kit/examples/addsvc/thrift/gen-go/addsvc"
+	"github.com/codelingo/kit/log"
+	"github.com/codelingo/kit/metrics"
+	"github.com/codelingo/kit/metrics/prometheus"
+	"github.com/codelingo/kit/tracing/opentracing"
 )
 
 func main() {

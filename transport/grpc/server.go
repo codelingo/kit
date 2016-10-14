@@ -4,8 +4,8 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/go-kit/kit/endpoint"
-	"github.com/go-kit/kit/log"
+	"github.com/codelingo/kit/endpoint"
+	"github.com/codelingo/kit/log"
 )
 
 // Handler which should be called from the grpc binding of the service

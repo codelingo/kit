@@ -9,8 +9,8 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/metrics"
+	"github.com/codelingo/kit/log"
+	"github.com/codelingo/kit/metrics"
 )
 
 // Service describes a service that adds things together.

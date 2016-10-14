@@ -8,8 +8,8 @@ import (
 
 	stdinflux "github.com/influxdata/influxdb/client/v2"
 
-	"github.com/go-kit/kit/metrics"
-	"github.com/go-kit/kit/metrics/influxdb"
+	"github.com/codelingo/kit/metrics"
+	"github.com/codelingo/kit/metrics/influxdb"
 )
 
 func TestCounter(t *testing.T) {

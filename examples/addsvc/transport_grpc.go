@@ -7,10 +7,10 @@ import (
 	stdopentracing "github.com/opentracing/opentracing-go"
 	"golang.org/x/net/context"
 
-	"github.com/go-kit/kit/examples/addsvc/pb"
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/tracing/opentracing"
-	grpctransport "github.com/go-kit/kit/transport/grpc"
+	"github.com/codelingo/kit/examples/addsvc/pb"
+	"github.com/codelingo/kit/log"
+	"github.com/codelingo/kit/tracing/opentracing"
+	grpctransport "github.com/codelingo/kit/transport/grpc"
 )
 
 // MakeGRPCServer makes a set of endpoints available as a gRPC AddServer.

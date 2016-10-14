@@ -7,7 +7,7 @@ import (
 	"golang.org/x/net/context"
 	"golang.org/x/net/context/ctxhttp"
 
-	"github.com/go-kit/kit/endpoint"
+	"github.com/codelingo/kit/endpoint"
 )
 
 // Client wraps a URL and provides a method that implements endpoint.Endpoint.

@@ -4,7 +4,7 @@ import (
 	"github.com/afex/hystrix-go/hystrix"
 	"golang.org/x/net/context"
 
-	"github.com/go-kit/kit/endpoint"
+	"github.com/codelingo/kit/endpoint"
 )
 
 // Hystrix returns an endpoint.Middleware that implements the circuit

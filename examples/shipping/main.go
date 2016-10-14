@@ -13,17 +13,17 @@ import (
 	stdprometheus "github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/net/context"
 
-	"github.com/go-kit/kit/log"
-	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
+	"github.com/codelingo/kit/log"
+	kitprometheus "github.com/codelingo/kit/metrics/prometheus"
 
-	"github.com/go-kit/kit/examples/shipping/booking"
-	"github.com/go-kit/kit/examples/shipping/cargo"
-	"github.com/go-kit/kit/examples/shipping/handling"
-	"github.com/go-kit/kit/examples/shipping/inspection"
-	"github.com/go-kit/kit/examples/shipping/location"
-	"github.com/go-kit/kit/examples/shipping/repository"
-	"github.com/go-kit/kit/examples/shipping/routing"
-	"github.com/go-kit/kit/examples/shipping/tracking"
+	"github.com/codelingo/kit/examples/shipping/booking"
+	"github.com/codelingo/kit/examples/shipping/cargo"
+	"github.com/codelingo/kit/examples/shipping/handling"
+	"github.com/codelingo/kit/examples/shipping/inspection"
+	"github.com/codelingo/kit/examples/shipping/location"
+	"github.com/codelingo/kit/examples/shipping/repository"
+	"github.com/codelingo/kit/examples/shipping/routing"
+	"github.com/codelingo/kit/examples/shipping/tracking"
 )
 
 const (

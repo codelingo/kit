@@ -9,7 +9,7 @@ import (
 	stdconsul "github.com/hashicorp/consul/api"
 	"golang.org/x/net/context"
 
-	"github.com/go-kit/kit/endpoint"
+	"github.com/codelingo/kit/endpoint"
 )
 
 func TestClientRegistration(t *testing.T) {

@@ -4,7 +4,7 @@ import (
 	"github.com/sony/gobreaker"
 	"golang.org/x/net/context"
 
-	"github.com/go-kit/kit/endpoint"
+	"github.com/codelingo/kit/endpoint"
 )
 
 // Gobreaker returns an endpoint.Middleware that implements the circuit

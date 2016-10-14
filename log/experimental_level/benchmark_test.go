@@ -4,8 +4,8 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/log/experimental_level"
+	"github.com/codelingo/kit/log"
+	"github.com/codelingo/kit/log/experimental_level"
 )
 
 func BenchmarkNopBaseline(b *testing.B) {

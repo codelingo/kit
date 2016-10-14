@@ -3,7 +3,7 @@ package lb
 import (
 	"errors"
 
-	"github.com/go-kit/kit/endpoint"
+	"github.com/codelingo/kit/endpoint"
 )
 
 // Balancer yields endpoints according to some heuristic.

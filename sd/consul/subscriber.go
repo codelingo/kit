@@ -6,10 +6,10 @@ import (
 
 	consul "github.com/hashicorp/consul/api"
 
-	"github.com/go-kit/kit/endpoint"
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/sd"
-	"github.com/go-kit/kit/sd/cache"
+	"github.com/codelingo/kit/endpoint"
+	"github.com/codelingo/kit/log"
+	"github.com/codelingo/kit/sd"
+	"github.com/codelingo/kit/sd/cache"
 )
 
 const defaultIndex = 0

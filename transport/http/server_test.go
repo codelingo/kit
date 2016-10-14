@@ -9,7 +9,7 @@ import (
 
 	"golang.org/x/net/context"
 
-	httptransport "github.com/go-kit/kit/transport/http"
+	httptransport "github.com/codelingo/kit/transport/http"
 )
 
 func TestServerBadDecode(t *testing.T) {

@@ -6,8 +6,8 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/go-kit/kit/endpoint"
-	httptransport "github.com/go-kit/kit/transport/http"
+	"github.com/codelingo/kit/endpoint"
+	httptransport "github.com/codelingo/kit/transport/http"
 )
 
 // Endpoints collects all of the endpoints that compose a profile service. It's

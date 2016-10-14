@@ -8,8 +8,8 @@ import (
 	jujuratelimit "github.com/juju/ratelimit"
 	"golang.org/x/net/context"
 
-	"github.com/go-kit/kit/endpoint"
-	"github.com/go-kit/kit/ratelimit"
+	"github.com/codelingo/kit/endpoint"
+	"github.com/codelingo/kit/ratelimit"
 )
 
 func TestTokenBucketLimiter(t *testing.T) {

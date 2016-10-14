@@ -15,8 +15,8 @@ import (
 	"net/http"
 	"net/url"
 
-	kithttp "github.com/go-kit/kit/transport/http"
-	kithttprp "github.com/go-kit/kit/transport/httprp"
+	kithttp "github.com/codelingo/kit/transport/http"
+	kithttprp "github.com/codelingo/kit/transport/httprp"
 	"github.com/gorilla/mux"
 	"golang.org/x/net/context"
 )

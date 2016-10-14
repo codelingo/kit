@@ -5,8 +5,8 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/go-kit/kit/endpoint"
-	"github.com/go-kit/kit/log"
+	"github.com/codelingo/kit/endpoint"
+	"github.com/codelingo/kit/log"
 )
 
 // Server wraps an endpoint and implements http.Handler.

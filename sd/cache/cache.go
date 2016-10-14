@@ -6,9 +6,9 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/go-kit/kit/endpoint"
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/sd"
+	"github.com/codelingo/kit/endpoint"
+	"github.com/codelingo/kit/log"
+	"github.com/codelingo/kit/sd"
 )
 
 // Cache collects the most recent set of endpoints from a service discovery

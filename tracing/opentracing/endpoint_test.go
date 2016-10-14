@@ -7,8 +7,8 @@ import (
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"golang.org/x/net/context"
 
-	"github.com/go-kit/kit/endpoint"
-	kitot "github.com/go-kit/kit/tracing/opentracing"
+	"github.com/codelingo/kit/endpoint"
+	kitot "github.com/codelingo/kit/tracing/opentracing"
 )
 
 func TestTraceServer(t *testing.T) {

@@ -4,8 +4,8 @@ import (
 	"math"
 	"testing"
 
-	"github.com/go-kit/kit/endpoint"
-	"github.com/go-kit/kit/sd"
+	"github.com/codelingo/kit/endpoint"
+	"github.com/codelingo/kit/sd"
 	"golang.org/x/net/context"
 )
 
