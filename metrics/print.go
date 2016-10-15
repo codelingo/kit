@@ -1,10 +1,6 @@
 package metrics
 
-import (
-	"fmt"
-	"io"
-	"text/tabwriter"
-)
+import "io"
 
 const (
 	bs  = "####################################################################################################"
@@ -14,29 +10,34 @@ const (
 // PrintDistribution writes a human-readable graph of the distribution to the
 // passed writer.
 func PrintDistribution(w io.Writer, h Histogram) {
-	buckets, quantiles := h.Distribution()
+	// TODO(waigani) Following code panics as h.Distribution is not defined.
+	// This fork needs to be updated with go-kit master. As we are currently
+	// using the fork only for the pubsub, the code is commented out to get
+	// the package to compile.
 
-	fmt.Fprintf(w, "name: %v\n", h.Name())
-	fmt.Fprintf(w, "quantiles: %v\n", quantiles)
+	// buckets, quantiles := h.Distribution()
 
-	var total float64
-	for _, bucket := range buckets {
-		total += float64(bucket.Count)
-	}
+	// fmt.Fprintf(w, "name: %v\n", h.Name())
+	// fmt.Fprintf(w, "quantiles: %v\n", quantiles)
 
-	tw := tabwriter.NewWriter(w, 0, 2, 2, ' ', 0)
-	fmt.Fprintf(tw, "From\tTo\tCount\tProb\tBar\n")
+	// var total float64
+	// for _, bucket := range buckets {
+	// 	total += float64(bucket.Count)
+	// }
 
-	axis := "|"
-	for _, bucket := range buckets {
-		if bucket.Count > 0 {
-			p := float64(bucket.Count) / total
-			fmt.Fprintf(tw, "%d\t%d\t%d\t%.4f\t%s%s\n", bucket.From, bucket.To, bucket.Count, p, axis, bs[:int(p*bsz)])
-			axis = "|"
-		} else {
-			axis = ":" // show that some bars were skipped
-		}
-	}
+	// tw := tabwriter.NewWriter(w, 0, 2, 2, ' ', 0)
+	// fmt.Fprintf(tw, "From\tTo\tCount\tProb\tBar\n")
 
-	tw.Flush()
+	// axis := "|"
+	// for _, bucket := range buckets {
+	// 	if bucket.Count > 0 {
+	// 		p := float64(bucket.Count) / total
+	// 		fmt.Fprintf(tw, "%d\t%d\t%d\t%.4f\t%s%s\n", bucket.From, bucket.To, bucket.Count, p, axis, bs[:int(p*bsz)])
+	// 		axis = "|"
+	// 	} else {
+	// 		axis = ":" // show that some bars were skipped
+	// 	}
+	// }
+
+	// tw.Flush()
 }
