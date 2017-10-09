@@ -69,8 +69,8 @@ func SetClientBefore(before ...RequestFunc) ClientOption {
 // Endpoint returns a usable endpoint that will invoke the gRPC specified by the
 // client.
 func (c Client) Endpoint() endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		ctx, cancel := context.WithCancel(ctx)
+	return func(parent context.Context, request interface{}) (interface{}, error) {
+		ctx, cancel := context.WithCancel(parent)
 		defer cancel()
 
 		req, err := c.enc(ctx, request)
@@ -83,6 +83,11 @@ func (c Client) Endpoint() endpoint.Endpoint {
 			ctx = f(ctx, md)
 		}
 		ctx = metadata.NewContext(ctx, *md)
+
+		mdWithApiKey, hasApiKey := metadata.FromOutgoingContext(parent)
+		if hasApiKey {
+			ctx = metadata.NewOutgoingContext(ctx, mdWithApiKey)
+		}
 
 		grpcReply := reflect.New(c.grpcReply).Interface()
 		if err = grpc.Invoke(ctx, c.method, req, grpcReply, c.client); err != nil {
