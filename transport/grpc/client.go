@@ -86,7 +86,7 @@ func (c Client) Endpoint() endpoint.Endpoint {
 		for _, f := range c.before {
 			ctx = f(ctx, md)
 		}
-		ctx = metadata.NewContext(ctx, *md)
+		ctx = metadata.NewOutgoingContext(ctx, *md)
 
 		mdWithApiKey, hasApiKey := metadata.FromOutgoingContext(parent)
 		if hasApiKey {
