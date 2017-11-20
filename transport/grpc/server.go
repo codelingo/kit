@@ -77,7 +77,7 @@ func (s Server) ServeGRPC(grpcCtx context.Context, req interface{}) (context.Con
 	ctx := s.ctx
 
 	// Retrieve gRPC metadata.
-	md, ok := metadata.FromContext(grpcCtx)
+	md, ok := metadata.FromIncomingContext(grpcCtx)
 	if !ok {
 		md = metadata.MD{}
 	}
@@ -87,7 +87,7 @@ func (s Server) ServeGRPC(grpcCtx context.Context, req interface{}) (context.Con
 	}
 
 	// Store potentially updated metadata in the gRPC context.
-	grpcCtx = metadata.NewContext(grpcCtx, md)
+	grpcCtx = metadata.NewOutgoingContext(grpcCtx, md)
 
 	request, err := s.dec(grpcCtx, req)
 	if err != nil {
@@ -106,7 +106,7 @@ func (s Server) ServeGRPC(grpcCtx context.Context, req interface{}) (context.Con
 	}
 
 	// Store potentially updated metadata in the gRPC context.
-	grpcCtx = metadata.NewContext(grpcCtx, md)
+	grpcCtx = metadata.NewOutgoingContext(grpcCtx, md)
 
 	grpcResp, err := s.enc(grpcCtx, response)
 	if err != nil {
